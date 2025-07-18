@@ -9,10 +9,6 @@ existing products:
 - **GraphQL:**
   Within Sensorfact we expose most of our data regarding measurements, machine
   specific configuration and industry knowledge via a GraphQL API.
-- **Serverless:**
-  A big part of our backend consists of NodeJS services in a
-  Kubernetes cluster, but we are moving the logic of simple services to AWS Lambda
-  functions and deploy these using Serverless.
 - **TypeScript:**
   A big part of our code is written in plain JavaScript. All
   new projects use TypeScript, because we like the benefits that the type system
@@ -29,6 +25,8 @@ existing products:
    details. Feel free to make assumptions if needed, or contact us for clarification if you consider it necessary.
 >- Take this assignment as an opportunity to show us your style: what you like to
    work on, what you find important, how you address problems,etc.
+>- Feel free to use any tool you'd like, that includes AI assistants as well.
+   We want you to work with the tools you know from your Day2Day work but expect us to dive deep with you into   the decision making behind adding / using certain logic.
 >- **During the technical interview, we invite you to present your solution and discuss
    it together as a team**: which decisions you took and why, questions about specific parts of the code,
    libraries you have used, how easy and maintainable is the code,etc.
