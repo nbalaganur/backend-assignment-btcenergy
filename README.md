@@ -80,6 +80,8 @@ Requirements:
 - Yarn cli
 - Serverless framework: run `npm install -g serverless`
 
+**Note**: This project is configured for **local development only**. AWS deployment settings are commented out in `serverless.yml` for safety.
+
 Install dependencies:
 
 ```sh
@@ -93,4 +95,19 @@ yarn start
 ```
 
 The server will be ready at: `http://localhost:4000/graphql`
+
+## Configuration Options
+
+### Cache Behavior
+Control caching strategy for latest block queries:
+
+```bash
+# Default: Always fetch fresh latest block data
+yarn start
+
+# Development mode: Use cached data for faster testing
+FORCE_FRESH_LATEST=false yarn start
+```
+
+For more configuration options, see `ENVIRONMENT_CONFIG.md`.
 
