@@ -1,5 +1,6 @@
 import { SchemaComposer } from 'graphql-compose'
 import { energyResolvers } from './resolvers/energyResolvers'
+import { bitcoinApiService } from './services/bitcoinApi'
 
 const schemaComposer = new SchemaComposer()
 
@@ -44,6 +45,15 @@ const WalletEnergyDataTC = schemaComposer.createObjectTC({
     totalEnergyKwh: 'Float!',
     transactionCount: 'Int!',
     transactions: [EnergyConsumptionTC],
+  },
+})
+
+const CacheStatsTC = schemaComposer.createObjectTC({
+  name: 'CacheStats',
+  fields: {
+    redisConnected: 'Boolean!',
+    memoryEntries: 'Int!',
+    connectionAttempted: 'Boolean!',
   },
 })
 
@@ -123,6 +133,15 @@ schemaComposer.Query.addFields({
     },
     resolve: async (_, { forceFresh }) => {
       return energyResolvers.getLatestBlockEnergy(forceFresh)
+    },
+  },
+
+  // Cache statistics
+  cacheStats: {
+    type: CacheStatsTC,
+    description: 'Get cache statistics including Redis connection status and memory cache size',
+    resolve: async () => {
+      return bitcoinApiService.getCacheStats()
     },
   },
 })

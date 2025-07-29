@@ -6,25 +6,23 @@ import {
   BlocksInDay,
   WalletInfo
 } from '../types/bitcoin'
+import { cacheService } from './cacheService'
 
 // Energy cost per byte in KwH
 const ENERGY_COST_PER_BYTE = 4.56
 
-// Global cache that persists across Lambda instances in the same process
-const globalCache = new Map<string, { data: any; timestamp: number }>()
-
 export class BitcoinApiService {
   private readonly baseUrl = 'https://blockchain.info'
-  private cache = globalCache // Use global cache instead of instance cache
   private readonly cacheExpiry = 5 * 60 * 1000 // 5 minutes
   private readonly latestBlockCacheExpiry = 1 * 60 * 1000 // 1 minute for latest block
   private readonly fetchTimeout = 15000 // 15 seconds timeout for external API calls
 
   private async fetchWithCache<T>(url: string, cacheKey: string, customExpiry?: number): Promise<T> {
-    // Check cache first
-    const cached = this.cache.get(cacheKey)
     const expiry = customExpiry || this.cacheExpiry
     const now = Date.now()
+    
+    // Check cache first
+    const cached = await cacheService.get(cacheKey)
     
     if (cached && now - cached.timestamp < expiry) {      
       return cached.data
@@ -50,8 +48,8 @@ export class BitcoinApiService {
 
       const data = await response.json() as T
       
-      // Cache the result
-      this.cache.set(cacheKey, { data, timestamp: now })      
+      // Cache the result with TTL
+      await cacheService.set(cacheKey, data, expiry)
       return data
     } catch (error) {
       console.error(`Error fetching ${url}:`, error)
@@ -71,7 +69,7 @@ export class BitcoinApiService {
   async getLatestBlock(forceRefresh: boolean = false): Promise<LatestBlock> {
     if (forceRefresh) {
       // Clear cache for latest block to force fresh fetch
-      this.cache.delete('latest-block')
+      await cacheService.delete('latest-block')
     }
     
     return this.fetchWithCache<LatestBlock>(
@@ -117,20 +115,20 @@ export class BitcoinApiService {
     return block.tx.reduce((total, tx) => total + this.calculateTransactionEnergy(tx.size), 0)
   }
 
-  // Clear expired cache entries
+  // Get cache statistics and health
+  getCacheStats(): any {
+    return cacheService.getStats()
+  }
+
+  // Clear expired cache entries - now handled by cacheService
   clearExpiredCache(): void {
-    const now = Date.now()
-    for (const [key, value] of this.cache.entries()) {
-      if (now - value.timestamp >= this.cacheExpiry) {
-        this.cache.delete(key)
-      }
-    }
+    // This is now handled automatically by the cacheService
+    // Keep the method for backward compatibility
+    console.log('Cache cleanup is now handled automatically by cacheService')
   }
 }
 
 export const bitcoinApiService = new BitcoinApiService()
 
-// Clear cache periodically
-setInterval(() => {
-  bitcoinApiService.clearExpiredCache()
-}, 10 * 60 * 1000) // Every 10 minutes
+// The cache cleanup is now handled automatically by the cacheService
+// No need for setInterval here anymore

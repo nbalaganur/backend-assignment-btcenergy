@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@types/node-fetch": "^2.6.12",
+    "dotenv": "^17.2.1",
     "graphiql": "^5.2.0",
     "graphql": "^15.5.1",
     "graphql-compose": "^9.0.8",
@@ -21,7 +22,8 @@
     "graphql-request": "^5.0.0",
     "graphql-scalars": "^1.18.0",
     "lambda-api": "^0.11.2",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "redis": "^4.6.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.80",
