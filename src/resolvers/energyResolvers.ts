@@ -166,9 +166,13 @@ export class EnergyResolvers {
    */
   async getLatestBlockEnergy(forceFresh?: boolean): Promise<BlockEnergyData> {
     try {
+      console.log('🚀 getLatestBlockEnergy called with forceFresh:', forceFresh)
+      debugger;
       // User can control freshness per query, with smart default
       const forceRefresh = forceFresh
+      console.log('🔍 About to call getLatestBlock with forceRefresh:', forceRefresh)
       const latestBlock = await bitcoinApiService.getLatestBlock(forceRefresh)
+      console.log('📦 Got latest block:', latestBlock.hash)
       return this.getBlockEnergyConsumption(latestBlock.hash)
     } catch (error) {
       console.error('Error getting latest block energy:', error)

@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "start": "serverless offline start --httpPort=4000 --host 0.0.0.0",
+    "debug": "node --inspect=9230 node_modules/serverless/bin/serverless.js offline start --httpPort=4000 --host=0.0.0.0",
     "compile": "tsc -p . --noEmit",
     "test": "jest",
     "test:watch": "jest --watch --onlyChanged"
