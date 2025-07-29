@@ -175,6 +175,7 @@ export class EnergyResolvers {
       throw new Error('Failed to get latest block energy consumption')
     }
   }
+  //test
 }
 
 export const energyResolvers = new EnergyResolvers()
