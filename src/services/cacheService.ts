@@ -39,7 +39,6 @@ export class CacheService {
 
       // Skip Redis if no configuration is provided
       if (!redisUrl && !redisHost) {
-        console.log('ℹ️  No Redis configuration found, using in-memory cache only')
         return
       }
 
@@ -47,14 +46,18 @@ export class CacheService {
       let clientConfig: any = {}
 
       if (redisUrl) {
-        // Use URL if provided (better for Redis Cloud)
+        // Use URL if provided
         clientConfig = {
           url: redisUrl,
           socket: {
-            tls: true, // Redis Cloud requires TLS
             connectTimeout: 15000,
             commandTimeout: 5000
           }
+        }
+        
+        // Only add TLS for Redis Cloud (rediss://)
+        if (redisUrl.startsWith('rediss://')) {
+          clientConfig.socket.tls = true
         }
       } else if (redisHost) {
         // Use socket configuration for Redis Cloud
@@ -72,21 +75,23 @@ export class CacheService {
         }
       }
 
+      console.log('🚀 Creating Redis client with config:', JSON.stringify(clientConfig, null, 2))
       this.redisClient = createClient(clientConfig)
 
       // Handle Redis connection events
       this.redisClient.on('error', (error) => {
-        console.warn('Redis connection error, falling back to in-memory cache:', error.message)
         this.isRedisConnected = false
       })
 
       this.redisClient.on('connect', () => {
-        console.log('Connected to Redis successfully')
+        this.isRedisConnected = true
+      })
+
+      this.redisClient.on('ready', () => {
         this.isRedisConnected = true
       })
 
       this.redisClient.on('disconnect', () => {
-        console.log('Disconnected from Redis, using in-memory cache')
         this.isRedisConnected = false
       })
 
@@ -99,7 +104,6 @@ export class CacheService {
       await Promise.race([connectPromise, timeoutPromise])
       
     } catch (error) {
-      console.warn('Failed to connect to Redis, using in-memory cache:', error instanceof Error ? error.message : 'Unknown error')
       this.isRedisConnected = false
       this.redisClient = null
     }
@@ -124,11 +128,9 @@ export class CacheService {
     // Fallback to in-memory cache
     const memoryValue = this.globalCache.get(key)
     if (memoryValue) {
-      console.log(`Cache HIT (Memory): ${key}`)
       return memoryValue
     }
 
-    console.log(`Cache MISS: ${key}`)
     return null
   }
 
@@ -151,17 +153,14 @@ export class CacheService {
           await this.redisClient.set(key, redisValue)
         }
         
-        console.log(`Cache SET (Redis): ${key}`)
         return
       }
     } catch (error) {
-      console.warn(`Redis set error for key ${key}, falling back to in-memory:`, error instanceof Error ? error.message : 'Unknown error')
       this.isRedisConnected = false
     }
 
     // Fallback to in-memory cache
     this.globalCache.set(key, entry)
-    console.log(`💾 Cache SET (Memory): ${key}`)
   }
 
   async delete(key: string): Promise<void> {
@@ -169,15 +168,13 @@ export class CacheService {
       // Try Redis first if connected
       if (this.isRedisConnected && this.redisClient) {
         await this.redisClient.del(key)
-        console.log(`Cache DELETE (Redis): ${key}`)
       }
     } catch (error) {
-      console.warn(`Redis delete error for key ${key}:`, error instanceof Error ? error.message : 'Unknown error')
+      // Redis error - fall back to in-memory only
     }
 
     // Always delete from in-memory cache as well
     this.globalCache.delete(key)
-    console.log(`Cache DELETE (Memory): ${key}`)
   }
 
   async clear(): Promise<void> {
@@ -185,15 +182,13 @@ export class CacheService {
       // Try Redis first if connected
       if (this.isRedisConnected && this.redisClient) {
         await this.redisClient.flushDb()
-        console.log('Cache CLEAR (Redis): All keys deleted')
       }
     } catch (error) {
-      console.warn('Redis clear error:', error instanceof Error ? error.message : 'Unknown error')
+      // Redis error - fall back to in-memory only
     }
 
     // Always clear in-memory cache as well
     this.globalCache.clear()
-    console.log('Cache CLEAR (Memory): All keys deleted')
   }
 
   // Clean up expired entries from in-memory cache
@@ -210,10 +205,6 @@ export class CacheService {
     keysToDelete.forEach(key => {
       this.globalCache.delete(key)
     })
-
-    if (keysToDelete.length > 0) {
-      console.log(`Cleaned up ${keysToDelete.length} expired entries from memory cache`)
-    }
   }
 
   // Get cache statistics
@@ -234,9 +225,8 @@ export class CacheService {
     if (this.redisClient && this.isRedisConnected) {
       try {
         await this.redisClient.disconnect()
-        console.log('Disconnected from Redis')
       } catch (error) {
-        console.warn('Error disconnecting from Redis:', error instanceof Error ? error.message : 'Unknown error')
+        // Error disconnecting - ignore
       }
     }
   }
